@@ -1,0 +1,12 @@
+<ul>
+  <li *ngFor="let d of data | async"><a [routerLink]="['/', d.id]">
+    {{d.callsign}}</a> ({{d.vid}}) - {{ d | validate }}
+  </li>
+</ul>
+Load data:
+<input type="file" #dataLoader (change)="onFileChanged($event)">
+<button (click)="loadData()">Load</button>
+<br>
+<button (click)="downloadData()">Download</button>
+<button (click)="downloadResult(true)">Download Valid</button>
+<button (click)="downloadResult(false)">Download Invalid</button>

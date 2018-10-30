@@ -1,0 +1,43 @@
+<ng-container *ngIf="client$ | async as client">
+  <h1>{{client.callsign}} ({{client.vid}})</h1>
+  <div>
+    Status: {{ client | validate }}
+    <button *ngIf="!client.validated" (click)="validate(true)">Valid</button>
+    <button *ngIf="!client.validated" (click)="validate(false)">Not valid</button>
+    <button *ngIf="client.validated" (click)="reset()">Reset</button><br>
+    <a [href]="client | trackerLink" target="_blank">Tracker search</a>
+  </div>
+  <agm-map [fitBounds]="bound$ | async" [gestureHandling]="'cooperative'">
+    <agm-polyline strokeColor="red" [strokeOpacity]="1" [strokeWeight]="2">
+      <agm-polyline-point *ngFor="let position of client.positions" [latitude]="position.latitude | float" [longitude]="position.longtitude | float"></agm-polyline-point>
+    </agm-polyline>
+    <agm-marker [latitude]="markerLat" [longitude]="markerLon" *ngIf="markerShow"></agm-marker>
+  </agm-map>
+  <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positions[showingPointIndex - 1].latitude, client.positions[showingPointIndex - 1].longtitude)">Previous Point</button>
+  <button [disabled]="showingPointIndex >= client.positions.length - 1" (click)="showPosition(showingPointIndex + 1, client.positions[showingPointIndex + 1].latitude, client.positions[showingPointIndex + 1].longtitude)">Next Point</button>
+  <button (click)="removeMarker()">Remove Marker</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+        <th>Speed</th>
+        <th>Altitude</th>
+        <th>Ground</th>
+        <th>Show Marker</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let position of client.positions; let i = index" [class.hl]="i === showingPointIndex">
+        <td>{{position.time}}</td>
+        <td>{{position.latitude}}</td>
+        <td>{{position.longtitude}}</td>
+        <td>{{position.groundSpeed}}</td>
+        <td>{{position.altitude}}</td>
+        <td>{{position.onGround}}</td>
+        <td><button (click)="showPosition(i, position.latitude, position.longtitude)">Click</button></td>
+      </tr>
+    </tbody>
+  </table>
+</ng-container>
