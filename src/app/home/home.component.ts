@@ -22,7 +22,7 @@ export class HomeComponent {
       const [file] = event.target.files;
       reader.readAsText(file);
       reader.onload = () => {
-        this.loadedData = JSON.parse(reader.result);
+        this.loadedData = JSON.parse(reader.result as string);
         this.cd.markForCheck();
       };
     }
