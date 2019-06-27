@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { DownloadService } from './download.service';
@@ -12,7 +11,6 @@ export class DataService {
   resolved = false;
 
   constructor(
-    private http: HttpClient,
     private downloadService: DownloadService
   ) {}
 

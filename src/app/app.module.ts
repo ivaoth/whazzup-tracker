@@ -1,6 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
 import { AgmCoreModule } from '@agm/core';
 
 import { AppComponent } from './app.component';
@@ -23,7 +22,6 @@ import { TrackerLinkPipe } from './tracker-link.pipe';
   ],
   imports: [
     BrowserModule,
-    HttpClientModule,
     AgmCoreModule.forRoot({
       apiKey: 'AIzaSyAunCzIJDn_fcY_--Rfh5GWUVPOt8mM5fU',
     }),
