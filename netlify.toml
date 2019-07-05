@@ -2,3 +2,8 @@
   base = ""
   publish = "dist/whazzup-tracker"
   command = "npm run netlify-build"
+
+[[redirects]]
+  from = "*"
+  to = "index.html"
+  status = 200
