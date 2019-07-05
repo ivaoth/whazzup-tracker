@@ -10,10 +10,13 @@ import { MapComponent } from './map/map.component';
 import { FloatPipe } from './float.pipe';
 import { ValidatePipe } from './validate.pipe';
 import { TrackerLinkPipe } from './tracker-link.pipe';
+import { BROWSER_GLOBALS_PROVIDERS } from '@agm/core/utils/browser-globals';
+import { EVENT_DATE } from './event-date';
 
 const getApiKeyFromPrompt = () => {
-  return () => {
-    const apiKey = prompt('Enter Google Maps API Key');
+  const currentApiKey = localStorage.getItem('apiKey');
+  const apiKey = prompt('Enter Google Maps API Key', currentApiKey);
+  localStorage.setItem('apiKey', apiKey);
     return {
       apiKey
     };
@@ -36,6 +39,11 @@ const getApiKeyFromPrompt = () => {
   ],
   providers: [
     DataService,
+    ...BROWSER_GLOBALS_PROVIDERS,
+    {
+      provide: MapsAPILoader,
+      useClass: LazyMapsAPILoader
+    },
     {
       provide: LAZY_MAPS_API_CONFIG,
       useFactory: getApiKeyFromPrompt
