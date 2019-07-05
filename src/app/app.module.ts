@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { AgmCoreModule } from '@agm/core';
+import { AgmCoreModule, LAZY_MAPS_API_CONFIG } from '@agm/core';
 
 import { AppComponent } from './app.component';
 import { DataService } from './data.service';
@@ -10,6 +10,15 @@ import { MapComponent } from './map/map.component';
 import { FloatPipe } from './float.pipe';
 import { ValidatePipe } from './validate.pipe';
 import { TrackerLinkPipe } from './tracker-link.pipe';
+
+const getApiKeyFromPrompt = () => {
+  return () => {
+    const apiKey = prompt('Enter Google Maps API Key');
+    return {
+      apiKey
+    };
+  };
+};
 
 @NgModule({
   declarations: [
@@ -22,13 +31,15 @@ import { TrackerLinkPipe } from './tracker-link.pipe';
   ],
   imports: [
     BrowserModule,
-    AgmCoreModule.forRoot({
-      apiKey: 'AIzaSyAunCzIJDn_fcY_--Rfh5GWUVPOt8mM5fU',
-    }),
+    AgmCoreModule,
     AppRoutingModule
   ],
   providers: [
-    DataService
+    DataService,
+    {
+      provide: LAZY_MAPS_API_CONFIG,
+      useFactory: getApiKeyFromPrompt
+    }
   ],
   bootstrap: [AppComponent]
 })
