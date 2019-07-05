@@ -8,11 +8,11 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "netlify-build": "npm pack ./vendor/agm-core && npm run build -- --prod"
+    "netlify-build": "npm run build -- --prod"
   },
   "private": true,
   "dependencies": {
-    "@agm/core": "file:agm-core-1.0.0-beta.6.tgz",
+    "@agm/core": "file:vendor/agm-core",
     "@angular/animations": "8.1.0",
     "@angular/common": "8.1.0",
     "@angular/compiler": "8.1.0",
