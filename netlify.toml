@@ -1,0 +1,4 @@
+[build]
+  base = "/"
+  publish = "dist/whazzup-tracker"
+  command = "npm run netlify-build"
