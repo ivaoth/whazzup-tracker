@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { AgmCoreModule, LAZY_MAPS_API_CONFIG } from '@agm/core';
+import { AgmCoreModule, LAZY_MAPS_API_CONFIG, MapsAPILoader, LazyMapsAPILoader } from '@agm/core';
 
 import { AppComponent } from './app.component';
 import { DataService } from './data.service';
@@ -17,10 +17,16 @@ const getApiKeyFromPrompt = () => {
   const currentApiKey = localStorage.getItem('apiKey');
   const apiKey = prompt('Enter Google Maps API Key', currentApiKey);
   localStorage.setItem('apiKey', apiKey);
-    return {
-      apiKey
-    };
+  return {
+    apiKey
   };
+};
+
+const getEventDateFromPrompt = () => {
+  const currentEventDate = localStorage.getItem('eventDate');
+  const eventDate = prompt('Enter Event Date', currentEventDate);
+  localStorage.setItem('eventDate', eventDate);
+  return eventDate;
 };
 
 @NgModule({
@@ -47,6 +53,10 @@ const getApiKeyFromPrompt = () => {
     {
       provide: LAZY_MAPS_API_CONFIG,
       useFactory: getApiKeyFromPrompt
+    },
+    {
+      provide: EVENT_DATE,
+      useFactory: getEventDateFromPrompt
     }
   ],
   bootstrap: [AppComponent]

@@ -1,12 +1,14 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, Inject } from '@angular/core';
+import { EVENT_DATE } from './event-date';
 
 @Pipe({
   name: 'trackerLink'
 })
 export class TrackerLinkPipe implements PipeTransform {
+  constructor(@Inject(EVENT_DATE) private eventDate: string) {}
   transform(value: any, args?: any): any {
     return `https://tracker.ivao.aero/search.php?vid=${value.vid}&callsign=${
       value.callsign
-    }&conntype=PILOT&date=2018-06-23&search=Search`;
+    }&conntype=PILOT&date=${this.eventDate}&search=Search`;
   }
 }
