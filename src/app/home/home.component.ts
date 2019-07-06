@@ -2,7 +2,7 @@ import { ViewportScroller } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { Router, Scroll } from '@angular/router';
 import { Observable } from 'rxjs';
-import { delay, filter, first, switchMap, tap } from 'rxjs/operators';
+import { delay, filter, first, switchMap, tap, shareReplay } from 'rxjs/operators';
 import { DataService } from '../data.service';
 import { DownloadService } from '../download.service';
 
@@ -21,7 +21,7 @@ export class HomeComponent {
     private viewportScroller: ViewportScroller,
     private router: Router
   ) {
-    this.data = _data.getData();
+    this.data = _data.getData().pipe(shareReplay(1));
     this.router.events
       .pipe(
         filter((e): e is Scroll => e instanceof Scroll),
