@@ -4,6 +4,7 @@ import { Observable, combineLatest, Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { map, switchMap, take, first } from 'rxjs/operators';
 import { LatLngBoundsLiteral } from '@agm/core';
+import { WhazzupSession } from '../shared/whazzup-session';
 
 @Component({
   selector: 'app-map',
@@ -14,8 +15,8 @@ export class MapComponent implements OnInit {
   lat = 0;
   lon = 0;
 
-  data: Observable<any[]>;
-  client$: Observable<any>;
+  data: Observable<WhazzupSession[]>;
+  client$: Observable<WhazzupSession>;
   bound$: Observable<LatLngBoundsLiteral>;
   markerLat: number;
   markerLon: number;
@@ -27,10 +28,10 @@ export class MapComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.client$ = combineLatest(
+    this.client$ = combineLatest([
       this.data,
       this.route.paramMap.pipe(map(p => p.get('id')))
-    ).pipe(
+    ]).pipe(
       map(([data, id]) => {
         return data.find(v => {
           return v.id === parseInt(id, 10);
@@ -44,8 +45,8 @@ export class MapComponent implements OnInit {
         let north: number;
         let south: number;
         for (const position of c.positions) {
-          const lat = parseFloat(position.latitude);
-          const lon = parseFloat(position.longtitude);
+          const lat = position.latitude;
+          const lon = position.longtitude;
           if (!west || lon < west) {
             west = lon;
           }
@@ -97,10 +98,10 @@ export class MapComponent implements OnInit {
         this._data.validate(id, valid);
       });
     this.data = this._data.getData();
-    this.client$ = combineLatest(
+    this.client$ = combineLatest([
       this.data,
       this.route.paramMap.pipe(map(p => p.get('id')))
-    ).pipe(
+    ]).pipe(
       map(([data, id]) => {
         return data.find(v => {
           return v.id === parseInt(id, 10);
@@ -124,10 +125,10 @@ export class MapComponent implements OnInit {
         this._data.reset(id);
       });
     this.data = this._data.getData();
-    this.client$ = combineLatest(
+    this.client$ = combineLatest([
       this.data,
       this.route.paramMap.pipe(map(p => p.get('id')))
-    ).pipe(
+    ]).pipe(
       map(([data, id]) => {
         return data.find(v => {
           return v.id === parseInt(id, 10);

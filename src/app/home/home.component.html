@@ -1,12 +1,20 @@
 <ul>
-  <li *ngFor="let d of data | async"><a [routerLink]="['/', d.id]">
-    {{d.callsign}}</a> ({{d.vid}}) - {{ d | validate }}
+  <li *ngFor="let d of groupedData | async">
+    {{ d.vid }} - {{ d.sessions.length }} sessions
+    <ol>
+      <li *ngFor="let s of d.sessions">
+        <a [routerLink]="['/', s.id]">{{ s.callsign }}</a> ({{
+          s.connectionTime
+        }}
+        - {{ s.updatedTime }}) {{ s | validate }}
+      </li>
+    </ol>
   </li>
 </ul>
 Load data:
-<input type="file" #dataLoader (change)="onFileChanged($event)">
+<input type="file" #dataLoader (change)="onFileChanged($event)" />
 <button (click)="loadData()">Load</button>
-<br>
+<br />
 <button (click)="downloadData()">Download</button>
 <button (click)="downloadResult(true)">Download Valid</button>
 <button (click)="downloadResult(false)">Download Invalid</button>

@@ -2,9 +2,11 @@ import { ViewportScroller } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { Router, Scroll } from '@angular/router';
 import { Observable } from 'rxjs';
-import { delay, filter, first, switchMap, tap, shareReplay } from 'rxjs/operators';
+import { delay, filter, first, switchMap, tap, shareReplay, map } from 'rxjs/operators';
 import { DataService } from '../data.service';
 import { DownloadService } from '../download.service';
+import { WhazzupSession } from '../shared/whazzup-session';
+import { User } from '../shared/user';
 
 @Component({
   selector: 'app-home',
@@ -12,7 +14,8 @@ import { DownloadService } from '../download.service';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
-  data: Observable<any[]>;
+  data: Observable<WhazzupSession[]>;
+  groupedData: Observable<User[]>;
   loadedData: any[];
   constructor(
     private _data: DataService,
@@ -22,6 +25,32 @@ export class HomeComponent {
     private router: Router
   ) {
     this.data = _data.getData().pipe(shareReplay(1));
+    this.groupedData = this.data.pipe(map(s => {
+      return s.reduce((prev: User[], curr: WhazzupSession) => {
+        const index = prev.findIndex(v => v.vid === curr.vid);
+        if (index !== -1) {
+          return prev.map(v => {
+            if (v.vid === curr.vid) {
+              return {
+                ...v,
+                sessions: [
+                  ...v.sessions,
+                  curr
+                ]
+              };
+            }
+            return v;
+          });
+        }
+        return [
+          ...prev,
+          {
+            vid: curr.vid,
+            sessions: [curr]
+          }
+        ];
+      }, [] as User[]);
+    }));
     this.router.events
       .pipe(
         filter((e): e is Scroll => e instanceof Scroll),
