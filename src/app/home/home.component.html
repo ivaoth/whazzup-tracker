@@ -1,12 +1,37 @@
 <ul>
   <li *ngFor="let d of groupedData | async">
     {{ d.vid }} - {{ d.sessions.length }} sessions
+    <ng-container
+      *ngIf="
+        selectedForMultiview.vid === d.vid &&
+        selectedForMultiview.selected.length > 0
+      "
+    >
+      <button (click)="navigateMultiview()">View multiview</button>
+      <button (click)="clearMultiview()">Clear multiview</button>
+    </ng-container>
     <ol>
       <li *ngFor="let s of d.sessions">
-        <a [routerLink]="['/', s.id]">{{ s.callsign }}</a> ({{
-          s.connectionTime
-        }}
-        - {{ s.updatedTime }}) {{ s | validate }}
+        <a [routerLink]="['/', 'map']" [queryParams]="{ id: s.id }">{{
+          s.callsign
+        }}</a>
+        ({{ s.connectionTime }} - {{ s.updatedTime }}) {{ s | validate }}
+        <button
+          *ngIf="
+            (selectedForMultiview.selected.length === 0 ||
+              selectedForMultiview.vid === s.vid) &&
+            !selectedForMultiview.selected.includes(s.id)
+          "
+          (click)="addToMultiview(s.id, d.vid)"
+        >
+          Add to Multiview
+        </button>
+        <button
+          *ngIf="selectedForMultiview.selected.includes(s.id)"
+          (click)="removeFromMultiview(s.id)"
+        >
+          Remove from Multiview
+        </button>
       </li>
     </ol>
   </li>

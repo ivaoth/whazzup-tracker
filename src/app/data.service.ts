@@ -42,9 +42,9 @@ export class DataService {
     this.data = data;
   }
 
-  validate(id: number, valid: boolean) {
+  validateBulk(ids: number[], valid: boolean) {
     this.data = this.data.map(s => {
-      if (s.id === id) {
+      if (ids.includes(s.id)) {
         return {
           ...s,
           valid,
@@ -56,9 +56,13 @@ export class DataService {
     localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
   }
 
-  reset(id: number) {
+  validate(id: number, valid: boolean) {
+    this.validateBulk([id], valid);
+  }
+
+  resetBulk(ids: number[]) {
     this.data = this.data.map(s => {
-      if (s.id === id) {
+      if (ids.includes(s.id)) {
         return {
           ...s,
           validated: false
@@ -67,6 +71,10 @@ export class DataService {
       return s;
     });
     localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
+  }
+
+  reset(id: number) {
+    this.resetBulk([id]);
   }
 
   download() {

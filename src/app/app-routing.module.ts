@@ -10,7 +10,7 @@ const routes: Route[] = [
     component: HomeComponent
   },
   {
-    path: ':id',
+    path: 'map',
     component: MapComponent
   }
 ];

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { DataService } from '../data.service';
-import { Observable, combineLatest, Subject } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { map, switchMap, take, first } from 'rxjs/operators';
 import { LatLngBoundsLiteral } from '@agm/core';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { combineLatest, Observable } from 'rxjs';
+import { first, map } from 'rxjs/operators';
+import { DataService } from '../data.service';
 import { WhazzupSession } from '../shared/whazzup-session';
 
 @Component({
@@ -28,16 +28,7 @@ export class MapComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.client$ = combineLatest([
-      this.data,
-      this.route.paramMap.pipe(map(p => p.get('id')))
-    ]).pipe(
-      map(([data, id]) => {
-        return data.find(v => {
-          return v.id === parseInt(id, 10);
-        });
-      })
-    );
+    this.updateData();
     this.bound$ = this.client$.pipe(
       map(c => {
         let west: number;
@@ -84,55 +75,63 @@ export class MapComponent implements OnInit {
   }
 
   validate(valid: boolean) {
-    this.route.paramMap
+    this.route.queryParamMap
       .pipe(
         map(pm => {
-          return pm.get('id');
+          return pm.getAll('id');
         }),
         map(ids => {
-          return parseInt(ids, 10);
+          return ids.map(id => parseInt(id, 10));
         }),
         first()
       )
-      .subscribe(id => {
-        this._data.validate(id, valid);
+      .subscribe(ids => {
+        this._data.validateBulk(ids, valid);
       });
     this.data = this._data.getData();
-    this.client$ = combineLatest([
-      this.data,
-      this.route.paramMap.pipe(map(p => p.get('id')))
-    ]).pipe(
-      map(([data, id]) => {
-        return data.find(v => {
-          return v.id === parseInt(id, 10);
-        });
-      })
-    );
+    this.updateData();
   }
 
   reset() {
-    this.route.paramMap
+    this.route.queryParamMap
       .pipe(
         map(pm => {
-          return pm.get('id');
+          return pm.getAll('id');
         }),
         map(ids => {
-          return parseInt(ids, 10);
+          return ids.map(id => parseInt(id, 10));
         }),
         first()
       )
-      .subscribe(id => {
-        this._data.reset(id);
+      .subscribe(ids => {
+        this._data.resetBulk(ids);
       });
     this.data = this._data.getData();
+    this.updateData();
+  }
+
+  private updateData() {
     this.client$ = combineLatest([
       this.data,
-      this.route.paramMap.pipe(map(p => p.get('id')))
+      this.route.queryParamMap.pipe(map(p => p.getAll('id')))
     ]).pipe(
       map(([data, id]) => {
-        return data.find(v => {
-          return v.id === parseInt(id, 10);
+        return id.map(i => {
+          return data.find(v => {
+            return v.id === parseInt(i, 10);
+          });
         });
+      }),
+      map(sessions => {
+        return {
+          ...sessions[0],
+          flightPlans: sessions
+            .map(s => s.flightPlans)
+            .reduce((prev, curr) => prev.concat(curr), []),
+          positions: sessions
+            .map(s => s.positions)
+            .reduce((prev, curr) => prev.concat(curr), [])
+        };
       })
     );
   }

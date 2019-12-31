@@ -2,7 +2,15 @@ import { ViewportScroller } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { Router, Scroll } from '@angular/router';
 import { Observable } from 'rxjs';
-import { delay, filter, first, switchMap, tap, shareReplay, map } from 'rxjs/operators';
+import {
+  delay,
+  filter,
+  first,
+  switchMap,
+  tap,
+  shareReplay,
+  map
+} from 'rxjs/operators';
 import { DataService } from '../data.service';
 import { DownloadService } from '../download.service';
 import { WhazzupSession } from '../shared/whazzup-session';
@@ -17,6 +25,10 @@ export class HomeComponent {
   data: Observable<WhazzupSession[]>;
   groupedData: Observable<User[]>;
   loadedData: any[];
+  selectedForMultiview: {
+    vid: string;
+    selected: number[];
+  } = { vid: '', selected: [] };
   constructor(
     private _data: DataService,
     private cd: ChangeDetectorRef,
@@ -25,32 +37,31 @@ export class HomeComponent {
     private router: Router
   ) {
     this.data = _data.getData().pipe(shareReplay(1));
-    this.groupedData = this.data.pipe(map(s => {
-      return s.reduce((prev: User[], curr: WhazzupSession) => {
-        const index = prev.findIndex(v => v.vid === curr.vid);
-        if (index !== -1) {
-          return prev.map(v => {
-            if (v.vid === curr.vid) {
-              return {
-                ...v,
-                sessions: [
-                  ...v.sessions,
-                  curr
-                ]
-              };
-            }
-            return v;
-          });
-        }
-        return [
-          ...prev,
-          {
-            vid: curr.vid,
-            sessions: [curr]
+    this.groupedData = this.data.pipe(
+      map(s => {
+        return s.reduce((prev: User[], curr: WhazzupSession) => {
+          const index = prev.findIndex(v => v.vid === curr.vid);
+          if (index !== -1) {
+            return prev.map(v => {
+              if (v.vid === curr.vid) {
+                return {
+                  ...v,
+                  sessions: [...v.sessions, curr]
+                };
+              }
+              return v;
+            });
           }
-        ];
-      }, [] as User[]);
-    }));
+          return [
+            ...prev,
+            {
+              vid: curr.vid,
+              sessions: [curr]
+            }
+          ];
+        }, [] as User[]);
+      })
+    );
     this.router.events
       .pipe(
         filter((e): e is Scroll => e instanceof Scroll),
@@ -94,6 +105,33 @@ export class HomeComponent {
         d.filter(c => c.validated && c.valid === valid).map(s => s.vid)
       );
       this.download.download(vids.join('\n'), `output-${valid}.txt`);
+    });
+  }
+
+  addToMultiview(id: number, vid: string) {
+    if (
+      (this.selectedForMultiview.vid === vid ||
+        this.selectedForMultiview.selected.length === 0) &&
+      !this.selectedForMultiview.selected.includes(id)
+    ) {
+      this.selectedForMultiview.selected.push(id);
+      this.selectedForMultiview.vid = vid;
+    }
+  }
+
+  removeFromMultiview(id: number) {
+    this.selectedForMultiview.selected = this.selectedForMultiview.selected.filter(
+      i => i !== id
+    );
+  }
+
+  clearMultiview() {
+    this.selectedForMultiview.selected = [];
+  }
+
+  navigateMultiview() {
+    this.router.navigate(['map'], {
+      queryParams: { id: this.selectedForMultiview.selected }
     });
   }
 
