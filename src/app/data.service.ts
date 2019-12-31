@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { DownloadService } from './download.service';
+import { WhazzupSession } from './shared/whazzup-session';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  data: any[];
+  data: WhazzupSession[];
   resolved = false;
 
   constructor(
@@ -42,26 +43,29 @@ export class DataService {
   }
 
   validate(id: number, valid: boolean) {
-    const dataIndex = this.data.findIndex(s => {
-      return s.id === id;
+    this.data = this.data.map(s => {
+      if (s.id === id) {
+        return {
+          ...s,
+          valid,
+          validated: true
+        };
+      }
+      return s;
     });
-    this.data = [
-      ...this.data.slice(0, dataIndex),
-      { ...this.data[dataIndex], validated: true, valid },
-      ...this.data.slice(dataIndex + 1)
-    ];
     localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
   }
 
   reset(id: number) {
-    const dataIndex = this.data.findIndex(s => {
-      return s.id === id;
+    this.data = this.data.map(s => {
+      if (s.id === id) {
+        return {
+          ...s,
+          validated: false
+        };
+      }
+      return s;
     });
-    this.data = [
-      ...this.data.slice(0, dataIndex),
-      { ...this.data[dataIndex], validated: false },
-      ...this.data.slice(dataIndex + 1)
-    ];
     localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
   }
 
