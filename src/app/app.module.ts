@@ -10,6 +10,7 @@ import { FloatPipe } from './float.pipe';
 import { ValidatePipe } from './validate.pipe';
 import { TrackerLinkPipe } from './tracker-link.pipe';
 import { EVENT_DATE } from './event-date';
+import { ClientByIdPipe } from './client-by-id.pipe';
 
 const getApiKeyFromPrompt = () => {
   const currentApiKey = localStorage.getItem('apiKey');
@@ -34,7 +35,8 @@ const getEventDateFromPrompt = () => {
     MapComponent,
     FloatPipe,
     ValidatePipe,
-    TrackerLinkPipe
+    TrackerLinkPipe,
+    ClientByIdPipe
   ],
   imports: [
     BrowserModule,
