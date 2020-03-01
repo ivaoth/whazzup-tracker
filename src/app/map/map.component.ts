@@ -43,7 +43,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   map: Map;
   markerLayer: VectorLayer;
 
-  @ViewChild('openLayers', { static: false }) mapElement: ElementRef;
+  @ViewChild('openLayers') mapElement: ElementRef;
 
   constructor(private _data: DataService, private route: ActivatedRoute) {
     this.data = _data.getData();
