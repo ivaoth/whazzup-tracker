@@ -125,5 +125,8 @@
       }
     }
   },
-  "defaultProject": "whazzup-tracker"
+  "defaultProject": "whazzup-tracker",
+  "cli": {
+    "analytics": false
+  }
 }
