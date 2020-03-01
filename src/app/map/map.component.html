@@ -23,6 +23,7 @@
             <th>Speed</th>
             <th>Altitude</th>
             <th>Ground</th>
+            <th>Client ID</th>
             <th>Show Marker</th>
           </tr>
         </thead>
@@ -34,6 +35,7 @@
             <td>{{position.groundSpeed}}</td>
             <td>{{position.altitude}}</td>
             <td>{{position.onGround}}</td>
+            <td>{{position.clientId}}</td>
             <td><button (click)="showPosition(i, position.latitude, position.longtitude)">Click</button></td>
           </tr>
         </tbody>
