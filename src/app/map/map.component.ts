@@ -42,6 +42,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   showingPointIndex: number;
   map: Map;
   markerLayer: VectorLayer;
+  smallMarkerLayer: VectorLayer;
 
   @ViewChild('openLayers') mapElement: ElementRef;
 
@@ -117,6 +118,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         f.setStyle(iconStyle);
         return f;
       });
+      this.smallMarkerLayer = new VectorLayer({
+        source: new VectorSource({ features: pointerFeatures })
+      });
       this.map
         .getView()
         .fit(boundingExtent(points), { padding: [50, 50, 50, 50] });
@@ -125,11 +129,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           source: new VectorSource({ features: lineFeatures })
         })
       );
-      this.map.addLayer(
-        new VectorLayer({
-          source: new VectorSource({ features: pointerFeatures })
-        })
-      );
+      this.map.addLayer(this.smallMarkerLayer);
       this.map.addLayer(this.markerLayer);
     });
   }
@@ -183,6 +183,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       });
     this.data = this._data.getData();
     this.updateData();
+  }
+
+  toggleSmallMarkers() {
+    this.smallMarkerLayer.setVisible(!this.smallMarkerLayer.getVisible());
   }
 
   private updateData() {

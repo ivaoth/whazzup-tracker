@@ -11,6 +11,7 @@
   <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positions[showingPointIndex - 1].latitude, client.positions[showingPointIndex - 1].longtitude)">Previous Point</button>
   <button [disabled]="showingPointIndex >= client.positions.length - 1" (click)="showPosition(showingPointIndex + 1, client.positions[showingPointIndex + 1].latitude, client.positions[showingPointIndex + 1].longtitude)">Next Point</button>
   <button (click)="removeMarker()">Remove Marker</button>
+  <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
   <table>
     <thead>
       <tr>
