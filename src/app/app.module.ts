@@ -1,6 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { AgmCoreModule, LAZY_MAPS_API_CONFIG, MapsAPILoader, LazyMapsAPILoader } from '@agm/core';
 
 import { AppComponent } from './app.component';
 import { DataService } from './data.service';
@@ -10,7 +9,6 @@ import { MapComponent } from './map/map.component';
 import { FloatPipe } from './float.pipe';
 import { ValidatePipe } from './validate.pipe';
 import { TrackerLinkPipe } from './tracker-link.pipe';
-import { BROWSER_GLOBALS_PROVIDERS } from '@agm/core/utils/browser-globals';
 import { EVENT_DATE } from './event-date';
 
 const getApiKeyFromPrompt = () => {
@@ -40,20 +38,10 @@ const getEventDateFromPrompt = () => {
   ],
   imports: [
     BrowserModule,
-    AgmCoreModule,
     AppRoutingModule
   ],
   providers: [
     DataService,
-    ...BROWSER_GLOBALS_PROVIDERS,
-    {
-      provide: MapsAPILoader,
-      useClass: LazyMapsAPILoader
-    },
-    {
-      provide: LAZY_MAPS_API_CONFIG,
-      useFactory: getApiKeyFromPrompt
-    },
     {
       provide: EVENT_DATE,
       useFactory: getEventDateFromPrompt

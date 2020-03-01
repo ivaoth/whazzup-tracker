@@ -7,12 +7,7 @@
     <button *ngIf="client.validated" (click)="reset()">Reset</button><br>
     <a [href]="client | trackerLink" target="_blank">Tracker search</a>
   </div>
-  <agm-map [fitBounds]="bound$ | async" [gestureHandling]="'cooperative'">
-    <agm-polyline strokeColor="red" [strokeOpacity]="1" [strokeWeight]="2">
-      <agm-polyline-point *ngFor="let position of client.positions" [latitude]="position.latitude | float" [longitude]="position.longtitude | float"></agm-polyline-point>
-    </agm-polyline>
-    <agm-marker [latitude]="markerLat" [longitude]="markerLon" *ngIf="markerShow"></agm-marker>
-  </agm-map>
+  <div #openLayers style="width: 100%; height: 80vh;"></div>
   <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positions[showingPointIndex - 1].latitude, client.positions[showingPointIndex - 1].longtitude)">Previous Point</button>
   <button [disabled]="showingPointIndex >= client.positions.length - 1" (click)="showPosition(showingPointIndex + 1, client.positions[showingPointIndex + 1].latitude, client.positions[showingPointIndex + 1].longtitude)">Next Point</button>
   <button (click)="removeMarker()">Remove Marker</button>

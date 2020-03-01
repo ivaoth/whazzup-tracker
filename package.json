@@ -12,7 +12,6 @@
   },
   "private": true,
   "dependencies": {
-    "@agm/core": "file:vendor/agm-core-1.0.0-beta.6.tgz",
     "@angular/animations": "8.2.14",
     "@angular/common": "8.2.14",
     "@angular/compiler": "8.2.14",
@@ -21,6 +20,7 @@
     "@angular/platform-browser": "8.2.14",
     "@angular/platform-browser-dynamic": "8.2.14",
     "@angular/router": "8.2.14",
+    "ol": "^6.2.1",
     "rxjs": "6.5.4",
     "tslib": "1.11.1",
     "zone.js": "0.10.2"
@@ -33,6 +33,7 @@
     "@types/jasmine": "3.5.7",
     "@types/jasminewd2": "2.0.8",
     "@types/node": "12.12.29",
+    "@types/ol": "^6.1.0",
     "codelyzer": "5.2.1",
     "jasmine-core": "3.5.0",
     "jasmine-spec-reporter": "4.2.1",
