@@ -12,7 +12,6 @@ import { DataService } from '../data.service';
 import { WhazzupSession } from '../shared/whazzup-session';
 import Map from 'ol/Map';
 import OSM from 'ol/source/OSM';
-import TileDebug from 'ol/source/TileDebug';
 import TileLayer from 'ol/layer/Tile';
 import { boundingExtent } from 'ol/extent';
 import { fromLonLat } from 'ol/proj';
@@ -54,8 +53,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.updateData();
     this.map = new Map({
       layers: [
-        new TileLayer({ source: new OSM() }),
-        new TileLayer({ source: new TileDebug() })
+        new TileLayer({ source: new OSM() })
       ]
     });
     const markerFeature = new Feature({
