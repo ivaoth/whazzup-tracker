@@ -14,6 +14,7 @@
   <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
   <div class="container">
     <div class="flightLog">
+      <h1>Flight Log</h1>
       <table>
         <thead>
           <tr>
@@ -42,6 +43,7 @@
       </table>
     </div>
     <div class="flightPlans">
+      <h1>Filed Flight Plans</h1>
       <ol>
         <li *ngFor="let flightPlan of client.flightPlans">
           (FPL-{{(flightPlan.clientId | clientById | async)?.callsign}}-{{flightPlan.flightRules}}{{flightPlan.typeOfFlight}}<br>
