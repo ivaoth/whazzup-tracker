@@ -1,3 +1,17 @@
 .hl {
   background-color: yellow;
 }
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "log plan";
+}
+
+.flightLog {
+  grid-area: log;
+}
+
+.flightPlans {
+  grid-area: plan;
+}

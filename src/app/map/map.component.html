@@ -12,28 +12,48 @@
   <button [disabled]="showingPointIndex >= client.positions.length - 1" (click)="showPosition(showingPointIndex + 1, client.positions[showingPointIndex + 1].latitude, client.positions[showingPointIndex + 1].longtitude)">Next Point</button>
   <button (click)="removeMarker()">Remove Marker</button>
   <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Latitude</th>
-        <th>Longitude</th>
-        <th>Speed</th>
-        <th>Altitude</th>
-        <th>Ground</th>
-        <th>Show Marker</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let position of client.positions; let i = index" [class.hl]="i === showingPointIndex">
-        <td>{{position.time}}</td>
-        <td>{{position.latitude}}</td>
-        <td>{{position.longtitude}}</td>
-        <td>{{position.groundSpeed}}</td>
-        <td>{{position.altitude}}</td>
-        <td>{{position.onGround}}</td>
-        <td><button (click)="showPosition(i, position.latitude, position.longtitude)">Click</button></td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="container">
+    <div class="flightLog">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Speed</th>
+            <th>Altitude</th>
+            <th>Ground</th>
+            <th>Show Marker</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let position of client.positions; let i = index" [class.hl]="i === showingPointIndex">
+            <td>{{position.time}}</td>
+            <td>{{position.latitude}}</td>
+            <td>{{position.longtitude}}</td>
+            <td>{{position.groundSpeed}}</td>
+            <td>{{position.altitude}}</td>
+            <td>{{position.onGround}}</td>
+            <td><button (click)="showPosition(i, position.latitude, position.longtitude)">Click</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flightPlans">
+      <ol>
+        <li *ngFor="let flightPlan of client.flightPlans">
+          (FPL-{{(flightPlan.clientId | clientById | async)?.callsign}}-{{flightPlan.flightRules}}{{flightPlan.typeOfFlight}}<br>
+          -{{flightPlan.fullAircraft}}<br>
+          -{{flightPlan.departure}}{{flightPlan.departureTime}}<br>
+          -{{flightPlan.cruisingSpeed}}{{flightPlan.cruisingLevel}} {{flightPlan.route}}<br>
+          -{{flightPlan.destination}}{{flightPlan.enrouteTime}} {{flightPlan.alternate}} {{flightPlan.alternate2}}<br>
+          -{{flightPlan.remarks}})<br>
+
+          <pre>Filed at {{flightPlan.time}}</pre>
+          <pre>Client ID: {{flightPlan.clientId}}</pre>
+        </li>
+      </ol>
+    </div>
+  </div>
+  
 </ng-container>
