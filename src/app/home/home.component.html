@@ -12,23 +12,23 @@
     </ng-container>
     <ol>
       <li *ngFor="let s of d.sessions">
-        <a [routerLink]="['/', 'map']" [queryParams]="{ id: s.id }">{{
+        <a [routerLink]="['/', 'map']" [queryParams]="{ id: s.order }">{{
           s.callsign
         }}</a>
-        ({{ s.connectionTime }} - {{ s.updatedTime }}) {{ s | validate }}
+        ({{ s.connectionTime }} - {{ s.lastUpdatedTime }}) {{ s | validate }}
         <button
           *ngIf="
             (selectedForMultiview.selected.length === 0 ||
               selectedForMultiview.vid === s.vid) &&
-            !selectedForMultiview.selected.includes(s.id)
+            !selectedForMultiview.selected.includes(s.order)
           "
-          (click)="addToMultiview(s.id, d.vid)"
+          (click)="addToMultiview(s.order, d.vid)"
         >
           Add to Multiview
         </button>
         <button
-          *ngIf="selectedForMultiview.selected.includes(s.id)"
-          (click)="removeFromMultiview(s.id)"
+          *ngIf="selectedForMultiview.selected.includes(s.order)"
+          (click)="removeFromMultiview(s.order)"
         >
           Remove from Multiview
         </button>

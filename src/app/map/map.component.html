@@ -8,8 +8,8 @@
     <a [href]="client | trackerLink" target="_blank">Tracker search</a>
   </div>
   <div #openLayers style="width: 100%; height: 80vh;"></div>
-  <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positions[showingPointIndex - 1].latitude, client.positions[showingPointIndex - 1].longtitude)">Previous Point</button>
-  <button [disabled]="showingPointIndex >= client.positions.length - 1" (click)="showPosition(showingPointIndex + 1, client.positions[showingPointIndex + 1].latitude, client.positions[showingPointIndex + 1].longtitude)">Next Point</button>
+  <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positionReports[showingPointIndex - 1].latitude, client.positionReports[showingPointIndex - 1].longitude)">Previous Point</button>
+  <button [disabled]="showingPointIndex >= client.positionReports.length - 1" (click)="showPosition(showingPointIndex + 1, client.positionReports[showingPointIndex + 1].latitude, client.positionReports[showingPointIndex + 1].longitude)">Next Point</button>
   <button (click)="removeMarker()">Remove Marker</button>
   <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
   <div class="container">
@@ -24,20 +24,20 @@
             <th>Speed</th>
             <th>Altitude</th>
             <th>Ground</th>
-            <th>Client ID</th>
+            <th>Session Order</th>
             <th>Show Marker</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let position of client.positions; let i = index" [class.hl]="i === showingPointIndex">
-            <td>{{position.time}}</td>
+          <tr *ngFor="let position of client.positionReports; let i = index" [class.hl]="i === showingPointIndex">
+            <td>{{position.timestamp}}</td>
             <td>{{position.latitude}}</td>
-            <td>{{position.longtitude}}</td>
+            <td>{{position.longitude}}</td>
             <td>{{position.groundSpeed}}</td>
             <td>{{position.altitude}}</td>
             <td>{{position.onGround}}</td>
-            <td>{{position.clientId}}</td>
-            <td><button (click)="showPosition(i, position.latitude, position.longtitude)">Click</button></td>
+            <td>{{position.sessionOrder}}</td>
+            <td><button (click)="showPosition(i, position.latitude, position.longitude)">Click</button></td>
           </tr>
         </tbody>
       </table>
@@ -46,18 +46,18 @@
       <h1>Filed Flight Plans</h1>
       <ol>
         <li *ngFor="let flightPlan of client.flightPlans">
-          (FPL-{{(flightPlan.clientId | clientById | async)?.callsign}}-{{flightPlan.flightRules}}{{flightPlan.typeOfFlight}}<br>
+          (FPL-{{(flightPlan.sessionOrder | clientById | async)?.callsign}}-{{flightPlan.flightRules}}{{flightPlan.typeOfFlight}}<br>
           -{{flightPlan.fullAircraft}}<br>
           -{{flightPlan.departure}}{{flightPlan.departureTime}}<br>
           -{{flightPlan.cruisingSpeed}}{{flightPlan.cruisingLevel}} {{flightPlan.route}}<br>
           -{{flightPlan.destination}}{{flightPlan.enrouteTime}} {{flightPlan.alternate}} {{flightPlan.alternate2}}<br>
           -{{flightPlan.remarks}})<br>
 
-          <pre>Filed at {{flightPlan.time}}</pre>
-          <pre>Client ID: {{flightPlan.clientId}}</pre>
+          <pre>Filed at {{flightPlan.timestamp}}</pre>
+          <pre>Client ID: {{flightPlan.sessionOrder}}</pre>
         </li>
       </ol>
     </div>
   </div>
-  
+
 </ng-container>

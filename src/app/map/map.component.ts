@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { combineLatest, Observable } from 'rxjs';
 import { first, map } from 'rxjs/operators';
 import { DataService } from '../data.service';
-import { WhazzupSession } from '../shared/whazzup-session';
+import { CombinedWhazzupSession, WhazzupSession } from '../shared/whazzup-session';
 import Map from 'ol/Map';
 import OSM from 'ol/source/OSM';
 import TileLayer from 'ol/layer/Tile';
@@ -34,7 +34,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   lon = 0;
 
   data: Observable<WhazzupSession[]>;
-  client$: Observable<WhazzupSession>;
+  client$: Observable<CombinedWhazzupSession>;
   markerLat: number;
   markerLon: number;
   markerShow = false;
@@ -46,7 +46,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   @ViewChild('openLayers') mapElement: ElementRef;
 
   constructor(private _data: DataService, private route: ActivatedRoute) {
-    this.data = _data.getData();
+    this.data = _data.dataSubject;
   }
 
   ngOnInit() {
@@ -82,11 +82,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.map.setTarget(this.mapElement.nativeElement);
 
     this.client$.pipe(first()).subscribe(s => {
-      const points = s.positions.map(p => {
-        return fromLonLat([p.longtitude, p.latitude]);
+      const points = s.positionReports.map(p => {
+        return fromLonLat([p.longitude, p.latitude]);
       });
       const lineFeatures: Feature[] = [];
-      for (let i = 0; i <= s.positions.length - 2; i++) {
+      for (let i = 0; i <= s.positionReports.length - 2; i++) {
         const f = new Feature({
           geometry: new LineString([points[i], points[i + 1]])
         });
@@ -94,9 +94,9 @@ export class MapComponent implements OnInit, AfterViewInit {
           new Style({
             stroke: new Stroke({
               width: 2,
-              color: s.positions[i].onGround
+              color: s.positionReports[i].onGround
                 ? 'black'
-                : this.getAltitudeColour(s.positions[i].altitude)
+                : this.getAltitudeColour(s.positionReports[i].altitude)
             })
           })
         );
@@ -132,9 +132,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
   }
 
-  showPosition(index: number, sLatitude: string, sLongitude: string) {
-    const latitude = parseFloat(sLatitude);
-    const longitude = parseFloat(sLongitude);
+  showPosition(index: number, sLatitude: number, sLongitude: number) {
+    const latitude = sLatitude;
+    const longitude = sLongitude;
     this.showingPointIndex = index;
     this.markerLayer
       .getSource()
@@ -161,7 +161,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       .subscribe(ids => {
         this._data.validateBulk(ids, valid);
       });
-    this.data = this._data.getData();
     this.updateData();
   }
 
@@ -179,7 +178,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       .subscribe(ids => {
         this._data.resetBulk(ids);
       });
-    this.data = this._data.getData();
     this.updateData();
   }
 
@@ -193,22 +191,34 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.route.queryParamMap.pipe(map(p => p.getAll('id')))
     ]).pipe(
       map(([data, id]) => {
-        return id.map(i => {
-          return data.find(v => {
-            return v.id === parseInt(i, 10);
-          });
+        return id.map<WhazzupSession & {order: number}>((i) => {
+          const idx = parseInt(i, 10);
+          return { ...data[i], order: idx };
         });
       }),
       map(sessions => {
-        return {
-          ...sessions[0],
+        const {order: dummy, ...firstSessionMeta} = sessions[0];
+        const out =  {
+          ...firstSessionMeta,
           flightPlans: sessions
-            .map(s => s.flightPlans)
+            .map(s => s.flightPlans.map((f) => {
+              return {
+                ...f,
+                sessionOrder: s.order
+              };
+            }))
             .reduce((prev, curr) => prev.concat(curr), []),
-          positions: sessions
-            .map(s => s.positions)
+          positionReports: sessions
+            .map(s => s.positionReports.map((pr) => {
+              return {
+                ...pr,
+                sessionOrder: s.order
+              };
+            }))
             .reduce((prev, curr) => prev.concat(curr), [])
         };
+        console.log(out);
+        return out;
       })
     );
   }

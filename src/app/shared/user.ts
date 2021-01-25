@@ -1,6 +1,6 @@
-import { WhazzupSession } from './whazzup-session';
+import { GroupedWhazzupSession } from './whazzup-session';
 
 export interface User {
   vid: string;
-  sessions: WhazzupSession[];
+  sessions: GroupedWhazzupSession[];
 }

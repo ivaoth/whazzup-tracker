@@ -36,17 +36,17 @@ export class HomeComponent {
     private viewportScroller: ViewportScroller,
     private router: Router
   ) {
-    this.data = _data.getData().pipe(shareReplay(1));
+    this.data = _data.dataSubject.pipe(shareReplay(1));
     this.groupedData = this.data.pipe(
       map(s => {
-        return s.reduce((prev: User[], curr: WhazzupSession) => {
+        return s.reduce((prev: User[], curr: WhazzupSession, order: number) => {
           const index = prev.findIndex(v => v.vid === curr.vid);
           if (index !== -1) {
             return prev.map(v => {
               if (v.vid === curr.vid) {
                 return {
                   ...v,
-                  sessions: [...v.sessions, curr]
+                  sessions: [...v.sessions, {...curr, order}]
                 };
               }
               return v;
@@ -56,7 +56,7 @@ export class HomeComponent {
             ...prev,
             {
               vid: curr.vid,
-              sessions: [curr]
+              sessions: [{...curr, order}]
             }
           ];
         }, [] as User[]);
@@ -92,7 +92,6 @@ export class HomeComponent {
 
   loadData() {
     this._data.setData(this.loadedData);
-    this.data = this._data.getData();
   }
 
   downloadData() {

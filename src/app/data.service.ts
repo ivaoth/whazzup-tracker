@@ -1,59 +1,53 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { first, tap } from 'rxjs/operators';
 import { DownloadService } from './download.service';
 import { WhazzupSession } from './shared/whazzup-session';
+import * as idbKv from 'idb-keyval';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  data: WhazzupSession[];
+  dataSubject: BehaviorSubject<WhazzupSession[]>;
+  dataSubjectInput: Subject<WhazzupSession[]>;
   resolved = false;
 
   constructor(
     private downloadService: DownloadService
-  ) {}
-
-  private fetchData() {
-    try {
-      const data = JSON.parse(localStorage.getItem('whazzup_tracker_data'));
-      return of(data);
-    } catch (e) {
-      return of([]);
-    }
-  }
-
-  getData(): Observable<any[]> {
-    if (this.resolved) {
-      return of(this.data);
-    } else {
-      return this.fetchData().pipe(
-        tap(d => {
-          this.data = d;
-          this.resolved = true;
-        })
-      );
-    }
+  ) {
+    this.dataSubject = new BehaviorSubject([]);
+    this.dataSubjectInput = new Subject();
+    idbKv.get<WhazzupSession[]>('whazzup_sessions_data').then((d) => {
+      if (d) {
+        this.dataSubject.next(d);
+      }
+      this.dataSubjectInput.subscribe((d) => {
+        idbKv.set('whazzup_sessions_data', d).then(() => {
+          this.dataSubject.next(d);
+        });
+      })
+    });
   }
 
   setData(data: any[]) {
-    localStorage.setItem('whazzup_tracker_data', JSON.stringify(data));
-    this.data = data;
+    this.dataSubjectInput.next(data);
+
   }
 
   validateBulk(ids: number[], valid: boolean) {
-    this.data = this.data.map(s => {
-      if (ids.includes(s.id)) {
-        return {
-          ...s,
-          valid,
-          validated: true
-        };
-      }
-      return s;
+    this.dataSubject.pipe(first()).subscribe(d => {
+      this.dataSubjectInput.next(d.map((s, i) => {
+        if (ids.includes(i)) {
+          return {
+            ...s,
+            valid,
+            validated: true
+          };
+        }
+        return s;
+      }));
     });
-    localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
   }
 
   validate(id: number, valid: boolean) {
@@ -61,16 +55,17 @@ export class DataService {
   }
 
   resetBulk(ids: number[]) {
-    this.data = this.data.map(s => {
-      if (ids.includes(s.id)) {
-        return {
-          ...s,
-          validated: false
-        };
-      }
-      return s;
+    this.dataSubject.pipe(first()).subscribe(d => {
+      this.dataSubjectInput.next(d.map((s, i) => {
+        if (ids.includes(i)) {
+          return {
+            ...s,
+            validated: false
+          };
+        }
+        return s;
+      }));
     });
-    localStorage.setItem('whazzup_tracker_data', JSON.stringify(this.data));
   }
 
   reset(id: number) {
@@ -78,9 +73,12 @@ export class DataService {
   }
 
   download() {
-    this.downloadService.download(
-      JSON.stringify(this.data, null, 2),
-      'whazzup-data.json'
-    );
+
+    this.dataSubject.pipe(first()).subscribe(d => {
+      this.downloadService.download(
+        JSON.stringify(d, null, 2),
+        'whazzup-data.json'
+      );
+    });
   }
 }

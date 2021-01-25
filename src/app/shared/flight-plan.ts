@@ -1,5 +1,4 @@
 export interface FlightPlan {
-  id: number;
   sequence: number;
   fullAircraft: string;
   aircraft: string;
@@ -18,6 +17,5 @@ export interface FlightPlan {
   route: string;
   typeOfFlight: string;
   pob: number;
-  time: Date;
-  clientId: number;
+  timestamp: Date;
 }

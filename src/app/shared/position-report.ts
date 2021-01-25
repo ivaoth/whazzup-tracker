@@ -1,12 +1,10 @@
 export interface PositionReport {
-  id: number;
-  time: Date;
+  timestamp: Date;
   latitude: number;
-  longtitude: number;
+  longitude: number;
   altitude: number;
   heading: number;
-  onGround: number;
+  onGround: boolean;
   groundSpeed: number;
   squawk: string;
-  clientId: number;
 }

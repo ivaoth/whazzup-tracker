@@ -11,14 +11,12 @@ export class ClientByIdPipe implements PipeTransform {
   data: Observable<WhazzupSession[]>
 
   constructor(_data: DataService) {
-    this.data = _data.getData();
+    this.data = _data.dataSubject;
   }
 
   transform(value: number): Observable<WhazzupSession> {
     return this.data.pipe(map(d => {
-      return d.find(s => {
-        return s.id === value
-      });
+      return d[value];
     }));
   }
 
