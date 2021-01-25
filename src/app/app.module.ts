@@ -12,14 +12,6 @@ import { TrackerLinkPipe } from './tracker-link.pipe';
 import { EVENT_DATE } from './event-date';
 import { ClientByIdPipe } from './client-by-id.pipe';
 
-const getApiKeyFromPrompt = () => {
-  const currentApiKey = localStorage.getItem('apiKey');
-  const apiKey = prompt('Enter Google Maps API Key', currentApiKey);
-  localStorage.setItem('apiKey', apiKey);
-  return {
-    apiKey
-  };
-};
 
 const getEventDateFromPrompt = () => {
   const currentEventDate = localStorage.getItem('eventDate');
