@@ -17,6 +17,10 @@
     "lib": [
       "es2017",
       "dom"
-    ]
+    ],
+    "paths": {
+      "ol": ["node_modules/@types/ol"],
+      "ol/*":  ["node_modules/@types/ol/*"],
+    }
   }
 }
