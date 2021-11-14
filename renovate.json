@@ -1,5 +1,5 @@
 {
   "extends": [
-    "@sarunint:angular-v12"
+    "@sarunint:angular-v13"
   ]
 }
