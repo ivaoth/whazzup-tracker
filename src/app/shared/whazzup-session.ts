@@ -1,7 +1,7 @@
 import { FlightPlan } from './flight-plan';
 import { PositionReport } from './position-report';
 
-export interface WhazzupSession {
+interface WhazzupSession {
   valid: boolean;
   validated: boolean;
   callsign: string;
@@ -17,8 +17,8 @@ export interface WhazzupSession {
   positionReports: PositionReport[];
 }
 
-export type FlightPlanWithSessionOrder = FlightPlan & { sessionOrder: number };
-export type PositionReportWithSessionOrder = PositionReport & { sessionOrder: number };
+type FlightPlanWithSessionOrder = FlightPlan & { sessionOrder: number };
+type PositionReportWithSessionOrder = PositionReport & { sessionOrder: number };
 
-export type GroupedWhazzupSession = WhazzupSession & { order: number };
-export type CombinedWhazzupSession = WhazzupSession & { flightPlans: FlightPlanWithSessionOrder[]; positionReports: PositionReportWithSessionOrder[] };
+type GroupedWhazzupSession = WhazzupSession & { order: number };
+type CombinedWhazzupSession = WhazzupSession & { flightPlans: FlightPlanWithSessionOrder[]; positionReports: PositionReportWithSessionOrder[] };

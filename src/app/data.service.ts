@@ -1,52 +1,57 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
-import { first, tap } from 'rxjs/operators';
+import { first, shareReplay } from 'rxjs/operators';
 import { DownloadService } from './download.service';
-import { WhazzupSession } from './shared/whazzup-session';
+import { PilotSessionWithValidation } from './shared/types';
 import * as idbKv from 'idb-keyval';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DataService {
-  dataSubject: BehaviorSubject<WhazzupSession[]>;
-  dataSubjectInput: Subject<WhazzupSession[]>;
+  dataSubject: Observable<PilotSessionWithValidation[]>;
+  private dataSubjectInternal: BehaviorSubject<PilotSessionWithValidation[]>;
+  dataSubjectInput: Subject<PilotSessionWithValidation[]>;
   resolved = false;
 
-  constructor(
-    private downloadService: DownloadService
-  ) {
-    this.dataSubject = new BehaviorSubject([]);
+  constructor(private downloadService: DownloadService) {
+    this.dataSubjectInternal = new BehaviorSubject(
+      [] as PilotSessionWithValidation[]
+    );
+    this.dataSubject = this.dataSubjectInternal.pipe(shareReplay());
     this.dataSubjectInput = new Subject();
-    idbKv.get<WhazzupSession[]>('whazzup_sessions_data').then((d) => {
-      if (d) {
-        this.dataSubject.next(d);
-      }
-      this.dataSubjectInput.subscribe((d) => {
-        idbKv.set('whazzup_sessions_data', d).then(() => {
-          this.dataSubject.next(d);
+    idbKv
+      .get<PilotSessionWithValidation[]>('whazzup_sessions_data')
+      .then((d) => {
+        if (d) {
+          this.dataSubjectInternal.next(d);
+        }
+        this.dataSubjectInput.subscribe((d) => {
+          idbKv.set('whazzup_sessions_data', d).then(() => {
+            this.dataSubjectInternal.next(d);
+          });
         });
-      })
-    });
+      });
   }
 
   setData(data: any[]) {
     this.dataSubjectInput.next(data);
-
   }
 
   validateBulk(ids: number[], valid: boolean) {
-    this.dataSubject.pipe(first()).subscribe(d => {
-      this.dataSubjectInput.next(d.map((s, i) => {
-        if (ids.includes(i)) {
-          return {
-            ...s,
-            valid,
-            validated: true
-          };
-        }
-        return s;
-      }));
+    this.dataSubjectInternal.pipe(first()).subscribe((d) => {
+      this.dataSubjectInput.next(
+        d.map((s) => {
+          if (ids.includes(s.id)) {
+            return {
+              ...s,
+              valid,
+              validated: true,
+            };
+          }
+          return s;
+        })
+      );
     });
   }
 
@@ -55,16 +60,18 @@ export class DataService {
   }
 
   resetBulk(ids: number[]) {
-    this.dataSubject.pipe(first()).subscribe(d => {
-      this.dataSubjectInput.next(d.map((s, i) => {
-        if (ids.includes(i)) {
-          return {
-            ...s,
-            validated: false
-          };
-        }
-        return s;
-      }));
+    this.dataSubjectInternal.pipe(first()).subscribe((d) => {
+      this.dataSubjectInput.next(
+        d.map((s) => {
+          if (ids.includes(s.id)) {
+            return {
+              ...s,
+              validated: false,
+            };
+          }
+          return s;
+        })
+      );
     });
   }
 
@@ -73,8 +80,7 @@ export class DataService {
   }
 
   download() {
-
-    this.dataSubject.pipe(first()).subscribe(d => {
+    this.dataSubject.pipe(first()).subscribe((d) => {
       this.downloadService.download(
         JSON.stringify(d, null, 2),
         'whazzup-data.json'

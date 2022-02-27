@@ -1,15 +1,47 @@
-<ng-container *ngIf="client$ | async as client">
-  <h1>{{client.callsign}} ({{client.vid}})</h1>
+<ng-container *ngIf="filteredData$ | async as filteredData">
+  <h1>
+    {{ filteredData[0] ? filteredData[0].callsign : '' }} ({{
+      filteredData[0] ? filteredData[0].userId : ''
+    }})
+  </h1>
   <div>
-    Status: {{ client | validate }}
-    <button *ngIf="!client.validated" (click)="validate(true)">Valid</button>
-    <button *ngIf="!client.validated" (click)="validate(false)">Not valid</button>
-    <button *ngIf="client.validated" (click)="reset()">Reset</button><br>
-    <a [href]="client | trackerLink" target="_blank">Tracker search</a>
+    Status: {{ filteredData[0] ? (filteredData[0] | validate) : '' }}
+    <button
+      *ngIf="filteredData[0] ? !filteredData[0].validated : false"
+      (click)="validate(true)"
+    >
+      Valid
+    </button>
+    <button
+      *ngIf="filteredData[0] ? !filteredData[0].validated : false"
+      (click)="validate(false)"
+    >
+      Not valid
+    </button>
+    <button
+      *ngIf="filteredData[0] ? filteredData[0].validated : false"
+      (click)="reset()"
+    >
+      Reset</button
+    ><br />
+    <ul>
+      <li *ngFor="let session of filteredData">
+        <a [href]="session | trackerLink" target="_blank"
+          >Session {{ session.id }}</a
+        >
+      </li>
+    </ul>
   </div>
-  <div #openLayers style="width: 100%; height: 80vh;"></div>
-  <button [disabled]="showingPointIndex <= 0" (click)="showPosition(showingPointIndex - 1, client.positionReports[showingPointIndex - 1].latitude, client.positionReports[showingPointIndex - 1].longitude)">Previous Point</button>
-  <button [disabled]="showingPointIndex >= client.positionReports.length - 1" (click)="showPosition(showingPointIndex + 1, client.positionReports[showingPointIndex + 1].latitude, client.positionReports[showingPointIndex + 1].longitude)">Next Point</button>
+  <div #openLayers style="width: 100%; height: 80vh"></div>
+  <button
+    [disabled]="!(markerstatus | async)?.isShowing"
+    (click)="goBackward()"
+  >
+    Previous Point
+  </button>
+  <button [disabled]="!(markerstatus | async)?.isShowing" (click)="goForward()">
+    Next Point
+  </button>
   <button (click)="removeMarker()">Remove Marker</button>
   <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
   <div class="container">
@@ -29,35 +61,61 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let position of client.positionReports; let i = index" [class.hl]="i === showingPointIndex">
-            <td>{{position.timestamp}}</td>
-            <td>{{position.latitude}}</td>
-            <td>{{position.longitude}}</td>
-            <td>{{position.groundSpeed}}</td>
-            <td>{{position.altitude}}</td>
-            <td>{{position.onGround}}</td>
-            <td>{{position.sessionOrder}}</td>
-            <td><button (click)="showPosition(i, position.latitude, position.longitude)">Click</button></td>
-          </tr>
+          <ng-container
+            *ngFor="let session of filteredData; let sessionIndex = index"
+          >
+            <tr
+              *ngFor="let track of session.tracks; let trackIndex = index"
+              [class.hl]="
+                (markerstatus | async)
+                  ? (markerstatus | async)?.isShowing &&
+                    (markerstatus | async)?.sessionIndex === sessionIndex &&
+                    (markerstatus | async)?.sessionTrackIndex === trackIndex
+                  : false
+              "
+            >
+              <td>{{ track.timestamp }}</td>
+              <td>{{ track.latitude }}</td>
+              <td>{{ track.longitude }}</td>
+              <td>{{ track.groundSpeed }}</td>
+              <td>{{ track.altitude }}</td>
+              <td>{{ track.onGround }}</td>
+              <td>{{ session.id }}</td>
+              <td>
+                <button (click)="setMarker(sessionIndex, trackIndex)">
+                  Click
+                </button>
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
     <div class="flightPlans">
       <h1>Filed Flight Plans</h1>
       <ol>
-        <li *ngFor="let flightPlan of client.flightPlans">
-          (FPL-{{(flightPlan.sessionOrder | clientById | async)?.callsign}}-{{flightPlan.flightRules}}{{flightPlan.typeOfFlight}}<br>
-          -{{flightPlan.fullAircraft}}<br>
-          -{{flightPlan.departure}}{{flightPlan.departureTime}}<br>
-          -{{flightPlan.cruisingSpeed}}{{flightPlan.cruisingLevel}} {{flightPlan.route}}<br>
-          -{{flightPlan.destination}}{{flightPlan.enrouteTime}} {{flightPlan.alternate}} {{flightPlan.alternate2}}<br>
-          -{{flightPlan.remarks}})<br>
+        <ng-container *ngFor="let session of filteredData">
+          <li *ngFor="let flightPlan of session.flightPlans">
+            (FPL-{{ session.callsign }}-{{ flightPlan.flightRules
+            }}{{ flightPlan.flightType }}<br />
+            -{{ flightPlan.aircraftNumber
+            }}{{ flightPlan.aircraft.icaoCode }}/{{
+              flightPlan.aircraft.wakeTurbulence
+            }}-{{ flightPlan.aircraftEquipments }}/{{
+              flightPlan.aircraftTransponderTypes
+            }}<br />
+            -{{ flightPlan.departureId }}{{ flightPlan.departureTime }}<br />
+            -{{ flightPlan.speed }}{{ flightPlan.level }} {{ flightPlan.route
+            }}<br />
+            -{{ flightPlan.arrivalId }}{{ flightPlan.eet }}
+            {{ flightPlan.alternativeId }} {{ flightPlan.alternative2Id }}<br />
+            -{{ flightPlan.remarks }})<br />
 
-          <pre>Filed at {{flightPlan.timestamp}}</pre>
-          <pre>Client ID: {{flightPlan.sessionOrder}}</pre>
-        </li>
+            <pre>Filed at {{ flightPlan.createdAt }}</pre>
+            <pre>Client ID: {{ session.id }}</pre>
+          </li>
+        </ng-container>
       </ol>
     </div>
   </div>
-
 </ng-container>

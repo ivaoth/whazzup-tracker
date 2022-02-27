@@ -9,26 +9,26 @@ import {
   switchMap,
   tap,
   shareReplay,
-  map
+  map,
 } from 'rxjs/operators';
 import { DataService } from '../data.service';
 import { DownloadService } from '../download.service';
-import { WhazzupSession } from '../shared/whazzup-session';
+import { PilotSession, PilotSessionWithValidation } from '../shared/types';
 import { User } from '../shared/user';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.css'],
 })
 export class HomeComponent {
-  data: Observable<WhazzupSession[]>;
+  data: Observable<PilotSessionWithValidation[]>;
   groupedData: Observable<User[]>;
-  loadedData: any[];
+  loadedData: PilotSession[] = [];
   selectedForMultiview: {
-    vid: string;
+    userId: number;
     selected: number[];
-  } = { vid: '', selected: [] };
+  } = { userId: 0, selected: [] };
   constructor(
     private _data: DataService,
     private cd: ChangeDetectorRef,
@@ -38,15 +38,15 @@ export class HomeComponent {
   ) {
     this.data = _data.dataSubject.pipe(shareReplay(1));
     this.groupedData = this.data.pipe(
-      map(s => {
-        return s.reduce((prev: User[], curr: WhazzupSession, order: number) => {
-          const index = prev.findIndex(v => v.vid === curr.vid);
+      map((s) => {
+        return s.reduce((prev: User[], curr: PilotSessionWithValidation) => {
+          const index = prev.findIndex((v) => v.userId === curr.userId);
           if (index !== -1) {
-            return prev.map(v => {
-              if (v.vid === curr.vid) {
+            return prev.map((v) => {
+              if (v.userId === curr.userId) {
                 return {
                   ...v,
-                  sessions: [...v.sessions, {...curr, order}]
+                  sessions: [...v.sessions, { ...curr }],
                 };
               }
               return v;
@@ -55,9 +55,9 @@ export class HomeComponent {
           return [
             ...prev,
             {
-              vid: curr.vid,
-              sessions: [{...curr, order}]
-            }
+              userId: curr.userId,
+              sessions: [{ ...curr }],
+            },
           ];
         }, [] as User[]);
       })
@@ -65,12 +65,13 @@ export class HomeComponent {
     this.router.events
       .pipe(
         filter((e): e is Scroll => e instanceof Scroll),
-        filter(e => !!e.position),
-        switchMap(e => {
+        map((e) => e.position),
+        filter((position): position is [number, number] => !!position),
+        switchMap((position) => {
           return this.data.pipe(
             delay(0),
-            tap(_ => {
-              this.viewportScroller.scrollToPosition(e.position);
+            tap((_) => {
+              this.viewportScroller.scrollToPosition(position);
             })
           );
         })
@@ -78,7 +79,7 @@ export class HomeComponent {
       .subscribe();
   }
 
-  onFileChanged(event) {
+  onFileChanged(event: any) {
     const reader = new FileReader();
     if (event.target.files && event.target.files.length) {
       const [file] = event.target.files;
@@ -99,29 +100,31 @@ export class HomeComponent {
   }
 
   downloadResult(valid: boolean) {
-    this.data.pipe(first()).subscribe(d => {
+    this.data.pipe(first()).subscribe((d) => {
       const vids = this.uniq(
-        d.filter(c => c.validated && c.valid === valid).map(s => s.vid)
+        d.filter((c) => c.validated && c.valid === valid).map((s) => s.userId)
       );
       this.download.download(vids.join('\n'), `output-${valid}.txt`);
     });
   }
 
-  addToMultiview(id: number, vid: string) {
+  addToMultiview(id: number, userId: number) {
     if (
-      (this.selectedForMultiview.vid === vid ||
+      (this.selectedForMultiview.userId === userId ||
         this.selectedForMultiview.selected.length === 0) &&
       !this.selectedForMultiview.selected.includes(id)
     ) {
-      this.selectedForMultiview.selected.push(id);
-      this.selectedForMultiview.vid = vid;
+      this.selectedForMultiview.selected = [
+        ...this.selectedForMultiview.selected,
+        id,
+      ];
+      this.selectedForMultiview.userId = userId;
     }
   }
 
   removeFromMultiview(id: number) {
-    this.selectedForMultiview.selected = this.selectedForMultiview.selected.filter(
-      i => i !== id
-    );
+    this.selectedForMultiview.selected =
+      this.selectedForMultiview.selected.filter((i) => i !== id);
   }
 
   clearMultiview() {
@@ -130,13 +133,13 @@ export class HomeComponent {
 
   navigateMultiview() {
     this.router.navigate(['map'], {
-      queryParams: { id: this.selectedForMultiview.selected }
+      queryParams: { id: this.selectedForMultiview.selected },
     });
   }
 
   private uniq(a: any[]) {
-    const seen = {};
-    return a.filter(i => {
+    const seen: any = {};
+    return a.filter((i) => {
       return (seen as Object).hasOwnProperty(i) ? false : (seen[i] = true);
     });
   }

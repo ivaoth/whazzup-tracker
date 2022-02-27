@@ -1,63 +1,71 @@
 import {
+  AfterViewInit,
   Component,
+  ElementRef,
   OnInit,
   ViewChild,
-  ElementRef,
-  AfterViewInit
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { combineLatest, Observable } from 'rxjs';
-import { first, map } from 'rxjs/operators';
-import { DataService } from '../data.service';
-import { CombinedWhazzupSession, WhazzupSession } from '../shared/whazzup-session';
-import Map from 'ol/Map';
-import OSM from 'ol/source/OSM';
-import TileLayer from 'ol/layer/Tile';
 import { boundingExtent } from 'ol/extent';
-import { fromLonLat } from 'ol/proj';
-import LineString from 'ol/geom/LineString';
-import VectorLayer from 'ol/layer/Vector';
 import Feature from 'ol/Feature';
-import VectorSource from 'ol/source/Vector';
-import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
+import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import Map from 'ol/Map';
+import { fromLonLat } from 'ol/proj';
+import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
 import Icon from 'ol/style/Icon';
+import Stroke from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
+import { combineLatest, Observable, Subject } from 'rxjs';
+import { filter, first, map, scan, shareReplay, tap } from 'rxjs/operators';
+import { DataService } from '../data.service';
+import { IPilotLastTrack, PilotSessionWithValidation } from '../shared/types';
 
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
-  styleUrls: ['./map.component.css']
+  styleUrls: ['./map.component.css'],
 })
 export class MapComponent implements OnInit, AfterViewInit {
-  lat = 0;
-  lon = 0;
-
-  data: Observable<WhazzupSession[]>;
-  client$: Observable<CombinedWhazzupSession>;
-  markerLat: number;
-  markerLon: number;
-  markerShow = false;
-  showingPointIndex: number;
-  map: Map;
+  data: Observable<PilotSessionWithValidation[]>;
+  filteredData$: Observable<PilotSessionWithValidation[]>;
+  map!: Map;
   markerLayer: VectorLayer;
-  smallMarkerLayer: VectorLayer;
+  smallMarkerLayer!: VectorLayer;
+  markerstatus: Observable<{
+    sessionIndex: number;
+    sessionTrackIndex: number;
+    isShowing: boolean;
+    data: PilotSessionWithValidation[];
+  }>;
+  markerEvent: Subject<MarkerEvent> = new Subject();
 
-  @ViewChild('openLayers') mapElement: ElementRef;
+  @ViewChild('openLayers') mapElement!: ElementRef;
 
   constructor(private _data: DataService, private route: ActivatedRoute) {
     this.data = _data.dataSubject;
-  }
-
-  ngOnInit() {
-    this.updateData();
-    this.map = new Map({
-      layers: [
-        new TileLayer({ source: new OSM() })
-      ]
-    });
+    this.filteredData$ = combineLatest([
+      this.data,
+      this.route.queryParamMap.pipe(map((p) => p.getAll('id'))),
+    ]).pipe(
+      map(([data, id]) => {
+        const ids = id.map((i) => parseInt(i, 10));
+        return data.filter((d) => ids.includes(d.id));
+      }),
+      tap((v) => {
+        this.markerEvent.next({
+          type: 'data',
+          payload: {
+            data: v,
+          },
+        });
+      })
+    );
     const markerFeature = new Feature({
-      geometry: new Point(fromLonLat([0, 0]))
+      geometry: new Point(fromLonLat([0, 0])),
     });
     markerFeature.setStyle(
       new Style({
@@ -65,162 +73,229 @@ export class MapComponent implements OnInit, AfterViewInit {
           src: '/assets/pin.png',
           scale: 0.25,
           anchor: [0.5, 1],
-          rotation: Math.PI
-        })
+          rotation: Math.PI,
+        }),
       })
     );
     markerFeature.setId(1);
     this.markerLayer = new VectorLayer({
       source: new VectorSource({
-        features: [markerFeature]
+        features: [markerFeature],
       }),
-      visible: false
+      visible: false,
+    });
+    this.markerstatus = this.markerEvent.pipe(
+      scan(
+        (prev, event) => {
+          switch (event.type) {
+            case 'remove':
+              return { ...prev, isShowing: false };
+            case 'set':
+              return {
+                ...prev,
+                sessionIndex: event.payload.sessionIndex,
+                sessionTrackIndex: event.payload.sessionTrackIndex,
+                isShowing: true,
+              };
+            case 'forward':
+              const currentSessionTrackLength =
+                prev.data[prev.sessionIndex].tracks.length;
+              if (prev.sessionTrackIndex < currentSessionTrackLength - 1) {
+                return {
+                  ...prev,
+                  sessionTrackIndex: prev.sessionTrackIndex + 1,
+                };
+              } else if (prev.sessionIndex < prev.data.length - 1) {
+                return {
+                  ...prev,
+                  sessionTrackIndex: 0,
+                  sessionIndex: prev.sessionIndex + 1,
+                };
+              } else {
+                return { ...prev };
+              }
+            case 'backward': {
+              if (prev.sessionTrackIndex > 0) {
+                return {
+                  ...prev,
+                  sessionTrackIndex: prev.sessionTrackIndex - 1,
+                };
+              } else if (prev.sessionIndex > 0) {
+                return {
+                  ...prev,
+                  sessionIndex: prev.sessionIndex - 1,
+                  sessionTrackIndex:
+                    prev.data[prev.sessionIndex - 1].tracks.length - 1,
+                };
+              } else {
+                return { ...prev };
+              }
+            }
+            case 'data': {
+              return { ...prev, data: event.payload.data };
+            }
+          }
+        },
+        {
+          sessionIndex: 0,
+          sessionTrackIndex: 0,
+          isShowing: false as boolean,
+          data: [] as PilotSessionWithValidation[],
+        }
+      ),
+      tap((v) => {
+        if (v.data.length > 0) {
+          if (
+            (v.sessionIndex < v.data.length ||
+              v.sessionTrackIndex < v.data[v.sessionIndex].tracks.length) &&
+            v.isShowing
+          ) {
+            this.markerLayer.setVisible(true);
+            const track = v.data[v.sessionIndex].tracks[v.sessionTrackIndex];
+            this.markerLayer
+              .getSource()
+              .getFeatureById(1)
+              .setGeometry(
+                new Point(fromLonLat([track.longitude, track.latitude]))
+              );
+          } else {
+            this.markerLayer.setVisible(false);
+          }
+        }
+      }),
+      shareReplay()
+    );
+  }
+
+  ngOnInit() {
+    this.map = new Map({
+      layers: [new TileLayer({ source: new OSM() })],
     });
   }
 
   ngAfterViewInit() {
-    this.map.setTarget(this.mapElement.nativeElement);
-
-    this.client$.pipe(first()).subscribe(s => {
-      const points = s.positionReports.map(p => {
-        return fromLonLat([p.longitude, p.latitude]);
-      });
-      const lineFeatures: Feature[] = [];
-      for (let i = 0; i <= s.positionReports.length - 2; i++) {
-        const f = new Feature({
-          geometry: new LineString([points[i], points[i + 1]])
+    this.filteredData$
+      .pipe(
+        filter((d) => d.length > 0),
+        first()
+      )
+      .subscribe((s) => {
+        this.map.setTarget(this.mapElement.nativeElement);
+        const tracks = ([] as IPilotLastTrack[]).concat(
+          ...s.map((session) => session.tracks)
+        );
+        const points = tracks.map((p) => {
+          return fromLonLat([p.longitude, p.latitude]);
         });
-        f.setStyle(
-          new Style({
-            stroke: new Stroke({
-              width: 2,
-              color: s.positionReports[i].onGround
-                ? 'black'
-                : this.getAltitudeColour(s.positionReports[i].altitude)
+        const lineFeatures: Feature[] = [];
+        for (let i = 0; i <= tracks.length - 2; i++) {
+          const f = new Feature({
+            geometry: new LineString([points[i], points[i + 1]]),
+          });
+          f.setStyle(
+            new Style({
+              stroke: new Stroke({
+                width: 2,
+                color: tracks[i].onGround
+                  ? 'black'
+                  : this.getAltitudeColour(tracks[i].altitude),
+              }),
             })
+          );
+          lineFeatures.push(f);
+        }
+        const iconStyle = new Style({
+          image: new Icon({
+            src: '/assets/pin.png',
+            scale: 0.1,
+            anchor: [0.5, 1],
+          }),
+        });
+        const pointerFeatures = points.map((p) => {
+          const f = new Feature({
+            geometry: new Point(p),
+          });
+          f.setStyle(iconStyle);
+          return f;
+        });
+        this.smallMarkerLayer = new VectorLayer({
+          source: new VectorSource({ features: pointerFeatures }),
+        });
+        this.map
+          .getView()
+          .fit(boundingExtent(points), { padding: [50, 50, 50, 50] });
+        this.map.addLayer(
+          new VectorLayer({
+            source: new VectorSource({ features: lineFeatures }),
           })
         );
-        lineFeatures.push(f);
-      }
-      const iconStyle = new Style({
-        image: new Icon({
-          src: '/assets/pin.png',
-          scale: 0.1,
-          anchor: [0.5, 1]
-        })
+        this.map.addLayer(this.smallMarkerLayer);
+        this.map.addLayer(this.markerLayer);
       });
-      const pointerFeatures = points.map(p => {
-        const f = new Feature({
-          geometry: new Point(p)
-        });
-        f.setStyle(iconStyle);
-        return f;
-      });
-      this.smallMarkerLayer = new VectorLayer({
-        source: new VectorSource({ features: pointerFeatures })
-      });
-      this.map
-        .getView()
-        .fit(boundingExtent(points), { padding: [50, 50, 50, 50] });
-      this.map.addLayer(
-        new VectorLayer({
-          source: new VectorSource({ features: lineFeatures })
-        })
-      );
-      this.map.addLayer(this.smallMarkerLayer);
-      this.map.addLayer(this.markerLayer);
+  }
+
+  setMarker(sessionIndex: number, sessionTrackIndex: number) {
+    this.markerEvent.next({
+      type: 'set',
+      payload: {
+        sessionIndex,
+        sessionTrackIndex,
+      },
     });
   }
 
-  showPosition(index: number, sLatitude: number, sLongitude: number) {
-    const latitude = sLatitude;
-    const longitude = sLongitude;
-    this.showingPointIndex = index;
-    this.markerLayer
-      .getSource()
-      .getFeatureById(1)
-      .setGeometry(new Point(fromLonLat([longitude, latitude])));
-    this.markerLayer.setVisible(true);
+  removeMarker() {
+    this.markerEvent.next({
+      type: 'remove',
+    });
   }
 
-  removeMarker() {
-    this.markerLayer.setVisible(false);
+  goBackward() {
+    this.markerEvent.next({
+      type: 'backward',
+    });
+  }
+
+  goForward() {
+    this.markerEvent.next({
+      type: 'forward',
+    });
   }
 
   validate(valid: boolean) {
     this.route.queryParamMap
       .pipe(
-        map(pm => {
+        map((pm) => {
           return pm.getAll('id');
         }),
-        map(ids => {
-          return ids.map(id => parseInt(id, 10));
+        map((ids) => {
+          return ids.map((id) => parseInt(id, 10));
         }),
         first()
       )
-      .subscribe(ids => {
+      .subscribe((ids) => {
         this._data.validateBulk(ids, valid);
       });
-    this.updateData();
   }
 
   reset() {
     this.route.queryParamMap
       .pipe(
-        map(pm => {
+        map((pm) => {
           return pm.getAll('id');
         }),
-        map(ids => {
-          return ids.map(id => parseInt(id, 10));
+        map((ids) => {
+          return ids.map((id) => parseInt(id, 10));
         }),
         first()
       )
-      .subscribe(ids => {
+      .subscribe((ids) => {
         this._data.resetBulk(ids);
       });
-    this.updateData();
   }
 
   toggleSmallMarkers() {
     this.smallMarkerLayer.setVisible(!this.smallMarkerLayer.getVisible());
-  }
-
-  private updateData() {
-    this.client$ = combineLatest([
-      this.data,
-      this.route.queryParamMap.pipe(map(p => p.getAll('id')))
-    ]).pipe(
-      map(([data, id]) => {
-        return id.map<WhazzupSession & {order: number}>((i) => {
-          const idx = parseInt(i, 10);
-          return { ...data[i], order: idx };
-        });
-      }),
-      map(sessions => {
-        const {order: dummy, ...firstSessionMeta} = sessions[0];
-        const out =  {
-          ...firstSessionMeta,
-          flightPlans: sessions
-            .map(s => s.flightPlans.map((f) => {
-              return {
-                ...f,
-                sessionOrder: s.order
-              };
-            }))
-            .reduce((prev, curr) => prev.concat(curr), []),
-          positionReports: sessions
-            .map(s => s.positionReports.map((pr) => {
-              return {
-                ...pr,
-                sessionOrder: s.order
-              };
-            }))
-            .reduce((prev, curr) => prev.concat(curr), [])
-        };
-        console.log(out);
-        return out;
-      })
-    );
   }
 
   private getAltitudeColour(altitude: number): string {
@@ -241,3 +316,37 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 }
+
+type MarkerEvent =
+  | RemoveMarkerEvent
+  | SetMarkerEvent
+  | MoveMarkerForwardEvent
+  | MoveMarkerBackwardEvent
+  | DataMarkerEvent;
+
+type RemoveMarkerEvent = {
+  type: 'remove';
+};
+
+type SetMarkerEvent = {
+  type: 'set';
+  payload: {
+    sessionIndex: number;
+    sessionTrackIndex: number;
+  };
+};
+
+type MoveMarkerForwardEvent = {
+  type: 'forward';
+};
+
+type MoveMarkerBackwardEvent = {
+  type: 'backward';
+};
+
+type DataMarkerEvent = {
+  type: 'data';
+  payload: {
+    data: PilotSessionWithValidation[];
+  };
+};

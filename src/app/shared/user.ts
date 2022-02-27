@@ -1,6 +1,6 @@
-import { GroupedWhazzupSession } from './whazzup-session';
+import { PilotSessionWithValidation } from './types';
 
 export interface User {
-  vid: string;
-  sessions: GroupedWhazzupSession[];
+  userId: number;
+  sessions: PilotSessionWithValidation[];
 }

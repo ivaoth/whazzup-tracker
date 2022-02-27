@@ -1,12 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { WhazzupSession } from './shared/whazzup-session';
+import { PilotSessionWithValidation } from './shared/types';
 
 @Pipe({
   name: 'validate'
 })
 export class ValidatePipe implements PipeTransform {
 
-  transform(value: WhazzupSession, args?: any): any {
+  transform(value: PilotSessionWithValidation, args?: any): any {
     if (value.validated) {
       if (value.valid) {
         return 'Validated as valid';

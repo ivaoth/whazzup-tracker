@@ -21,6 +21,12 @@
     "paths": {
       "ol": ["node_modules/@types/ol"],
       "ol/*":  ["node_modules/@types/ol/*"],
-    }
+    },
+    "strict": true
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true
   }
 }

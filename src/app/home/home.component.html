@@ -1,34 +1,46 @@
 <ul>
   <li *ngFor="let d of groupedData | async">
-    {{ d.vid }} - {{ d.sessions.length }} sessions
+    {{ d.userId }} - {{ d.sessions.length }} sessions
     <ng-container
       *ngIf="
-        selectedForMultiview.vid === d.vid &&
+        selectedForMultiview.userId === d.userId &&
         selectedForMultiview.selected.length > 0
       "
     >
+      {{
+        ([d.sessions, selectedForMultiview.selected]
+          | multipleSessionDistance)[0] | number: '.2-2'
+      }}
+      NM (gaps excluded)
+      {{
+        ([d.sessions, selectedForMultiview.selected]
+          | multipleSessionDistance)[1] | number: '.2-2'
+      }}
+      NM (gaps included)
       <button (click)="navigateMultiview()">View multiview</button>
       <button (click)="clearMultiview()">Clear multiview</button>
     </ng-container>
     <ol>
       <li *ngFor="let s of d.sessions">
-        <a [routerLink]="['/', 'map']" [queryParams]="{ id: s.order }">{{
+        <a [routerLink]="['/', 'map']" [queryParams]="{ id: s.id }">{{
           s.callsign
         }}</a>
-        ({{ s.connectionTime }} - {{ s.lastUpdatedTime }}) {{ s | validate }}
+        ({{ s.createdAt }} - {{ s.tracks[s.tracks.length - 1].timestamp }})
+        {{ s.tracks | sessionDistance | number: '.2-2' }} NM
+        {{ s | validate }}
         <button
           *ngIf="
             (selectedForMultiview.selected.length === 0 ||
-              selectedForMultiview.vid === s.vid) &&
-            !selectedForMultiview.selected.includes(s.order)
+              selectedForMultiview.userId === s.userId) &&
+            !selectedForMultiview.selected.includes(s.id)
           "
-          (click)="addToMultiview(s.order, d.vid)"
+          (click)="addToMultiview(s.id, d.userId)"
         >
           Add to Multiview
         </button>
         <button
-          *ngIf="selectedForMultiview.selected.includes(s.order)"
-          (click)="removeFromMultiview(s.order)"
+          *ngIf="selectedForMultiview.selected.includes(s.id)"
+          (click)="removeFromMultiview(s.id)"
         >
           Remove from Multiview
         </button>
