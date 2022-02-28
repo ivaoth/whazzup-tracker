@@ -34,7 +34,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   filteredData$: Observable<PilotSessionWithValidation[]>;
   map!: Map;
   markerLayer: VectorLayer;
-  smallMarkerLayer!: VectorLayer;
+  smallMarkerLayer: VectorLayer;
+  lineLayer: VectorLayer;
   markerstatus: Observable<{
     sessionIndex: number;
     sessionTrackIndex: number;
@@ -62,6 +63,49 @@ export class MapComponent implements OnInit, AfterViewInit {
             data: v,
           },
         });
+      }),
+      tap((s) => {
+        const tracks = ([] as IPilotLastTrack[]).concat(
+          ...s.map((session) => session.tracks)
+        );
+        const points = tracks.map((p) => {
+          return fromLonLat([p.longitude, p.latitude]);
+        });
+        const lineFeatures: Feature[] = [];
+        for (let i = 0; i <= tracks.length - 2; i++) {
+          const f = new Feature({
+            geometry: new LineString([points[i], points[i + 1]]),
+          });
+          f.setStyle(
+            new Style({
+              stroke: new Stroke({
+                width: 2,
+                color: tracks[i].onGround
+                  ? 'black'
+                  : this.getAltitudeColour(tracks[i].altitude),
+              }),
+            })
+          );
+          lineFeatures.push(f);
+        }
+        const iconStyle = new Style({
+          image: new Icon({
+            src: '/assets/pin.png',
+            scale: 0.1,
+            anchor: [0.5, 1],
+          }),
+        });
+        const pointerFeatures = points.map((p) => {
+          const f = new Feature({
+            geometry: new Point(p),
+          });
+          f.setStyle(iconStyle);
+          return f;
+        });
+        this.smallMarkerLayer.getSource().clear();
+        this.smallMarkerLayer.getSource().addFeatures(pointerFeatures);
+        this.lineLayer.getSource().clear();
+        this.lineLayer.getSource().addFeatures(lineFeatures);
       })
     );
     const markerFeature = new Feature({
@@ -84,6 +128,18 @@ export class MapComponent implements OnInit, AfterViewInit {
       }),
       visible: false,
     });
+    this.smallMarkerLayer = new VectorLayer({
+      source: new VectorSource(),
+    });
+    this.lineLayer = new VectorLayer({
+      source: new VectorSource(),
+    });
+    this.map = new Map({
+      layers: [new TileLayer({ source: new OSM() })],
+    });
+    this.map.addLayer(this.lineLayer);
+    this.map.addLayer(this.smallMarkerLayer);
+    this.map.addLayer(this.markerLayer);
     this.markerstatus = this.markerEvent.pipe(
       scan(
         (prev, event) => {
@@ -163,74 +219,30 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         }
       }),
-      shareReplay()
+      shareReplay(1)
     );
   }
 
   ngOnInit() {
-    this.map = new Map({
-      layers: [new TileLayer({ source: new OSM() })],
-    });
   }
 
   ngAfterViewInit() {
+    this.map.setTarget(this.mapElement.nativeElement);
     this.filteredData$
       .pipe(
         filter((d) => d.length > 0),
         first()
       )
       .subscribe((s) => {
-        this.map.setTarget(this.mapElement.nativeElement);
         const tracks = ([] as IPilotLastTrack[]).concat(
           ...s.map((session) => session.tracks)
         );
         const points = tracks.map((p) => {
           return fromLonLat([p.longitude, p.latitude]);
         });
-        const lineFeatures: Feature[] = [];
-        for (let i = 0; i <= tracks.length - 2; i++) {
-          const f = new Feature({
-            geometry: new LineString([points[i], points[i + 1]]),
-          });
-          f.setStyle(
-            new Style({
-              stroke: new Stroke({
-                width: 2,
-                color: tracks[i].onGround
-                  ? 'black'
-                  : this.getAltitudeColour(tracks[i].altitude),
-              }),
-            })
-          );
-          lineFeatures.push(f);
-        }
-        const iconStyle = new Style({
-          image: new Icon({
-            src: '/assets/pin.png',
-            scale: 0.1,
-            anchor: [0.5, 1],
-          }),
-        });
-        const pointerFeatures = points.map((p) => {
-          const f = new Feature({
-            geometry: new Point(p),
-          });
-          f.setStyle(iconStyle);
-          return f;
-        });
-        this.smallMarkerLayer = new VectorLayer({
-          source: new VectorSource({ features: pointerFeatures }),
-        });
         this.map
           .getView()
           .fit(boundingExtent(points), { padding: [50, 50, 50, 50] });
-        this.map.addLayer(
-          new VectorLayer({
-            source: new VectorSource({ features: lineFeatures }),
-          })
-        );
-        this.map.addLayer(this.smallMarkerLayer);
-        this.map.addLayer(this.markerLayer);
       });
   }
 

@@ -10,15 +10,13 @@ import * as idbKv from 'idb-keyval';
 })
 export class DataService {
   dataSubject: Observable<PilotSessionWithValidation[]>;
-  private dataSubjectInternal: BehaviorSubject<PilotSessionWithValidation[]>;
+  private dataSubjectInternal: Subject<PilotSessionWithValidation[]>;
   dataSubjectInput: Subject<PilotSessionWithValidation[]>;
   resolved = false;
 
   constructor(private downloadService: DownloadService) {
-    this.dataSubjectInternal = new BehaviorSubject(
-      [] as PilotSessionWithValidation[]
-    );
-    this.dataSubject = this.dataSubjectInternal.pipe(shareReplay());
+    this.dataSubjectInternal = new Subject();
+    this.dataSubject = this.dataSubjectInternal.pipe(shareReplay(1));
     this.dataSubjectInput = new Subject();
     idbKv
       .get<PilotSessionWithValidation[]>('whazzup_sessions_data')

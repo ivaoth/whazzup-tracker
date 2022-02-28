@@ -32,90 +32,86 @@
       </li>
     </ul>
   </div>
-  <div #openLayers style="width: 100%; height: 80vh"></div>
-  <button
-    [disabled]="!(markerstatus | async)?.isShowing"
-    (click)="goBackward()"
-  >
-    Previous Point
-  </button>
-  <button [disabled]="!(markerstatus | async)?.isShowing" (click)="goForward()">
-    Next Point
-  </button>
-  <button (click)="removeMarker()">Remove Marker</button>
-  <button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
-  <div class="container">
-    <div class="flightLog">
-      <h1>Flight Log</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>Speed</th>
-            <th>Altitude</th>
-            <th>Ground</th>
-            <th>Session Order</th>
-            <th>Show Marker</th>
-          </tr>
-        </thead>
-        <tbody>
-          <ng-container
-            *ngFor="let session of filteredData; let sessionIndex = index"
-          >
-            <tr
-              *ngFor="let track of session.tracks; let trackIndex = index"
-              [class.hl]="
-                (markerstatus | async)
-                  ? (markerstatus | async)?.isShowing &&
-                    (markerstatus | async)?.sessionIndex === sessionIndex &&
-                    (markerstatus | async)?.sessionTrackIndex === trackIndex
-                  : false
-              "
-            >
-              <td>{{ track.timestamp }}</td>
-              <td>{{ track.latitude }}</td>
-              <td>{{ track.longitude }}</td>
-              <td>{{ track.groundSpeed }}</td>
-              <td>{{ track.altitude }}</td>
-              <td>{{ track.onGround }}</td>
-              <td>{{ session.id }}</td>
-              <td>
-                <button (click)="setMarker(sessionIndex, trackIndex)">
-                  Click
-                </button>
-              </td>
-            </tr>
-          </ng-container>
-        </tbody>
-      </table>
-    </div>
-    <div class="flightPlans">
-      <h1>Filed Flight Plans</h1>
-      <ol>
-        <ng-container *ngFor="let session of filteredData">
-          <li *ngFor="let flightPlan of session.flightPlans">
-            (FPL-{{ session.callsign }}-{{ flightPlan.flightRules
-            }}{{ flightPlan.flightType }}<br />
-            -{{ flightPlan.aircraftNumber
-            }}{{ flightPlan.aircraft.icaoCode }}/{{
-              flightPlan.aircraft.wakeTurbulence
-            }}-{{ flightPlan.aircraftEquipments }}/{{
-              flightPlan.aircraftTransponderTypes
-            }}<br />
-            -{{ flightPlan.departureId }}{{ flightPlan.departureTime }}<br />
-            -{{ flightPlan.speed }}{{ flightPlan.level }} {{ flightPlan.route
-            }}<br />
-            -{{ flightPlan.arrivalId }}{{ flightPlan.eet }}
-            {{ flightPlan.alternativeId }} {{ flightPlan.alternative2Id }}<br />
-            -{{ flightPlan.remarks }})<br />
-
-            <pre>Filed at {{ flightPlan.createdAt }}</pre>
-            <pre>Client ID: {{ session.id }}</pre>
-          </li>
-        </ng-container>
-      </ol>
-    </div>
-  </div>
 </ng-container>
+<div #openLayers style="width: 100%; height: 80vh"></div>
+<button [disabled]="!(markerstatus | async)?.isShowing" (click)="goBackward()">
+  Previous Point
+</button>
+<button [disabled]="!(markerstatus | async)?.isShowing" (click)="goForward()">
+  Next Point
+</button>
+<button (click)="removeMarker()">Remove Marker</button>
+<button (click)="toggleSmallMarkers()">Toggle Small Markers</button>
+<div class="container">
+  <div class="flightLog">
+    <h1>Flight Log</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Speed</th>
+          <th>Altitude</th>
+          <th>Ground</th>
+          <th>Session Order</th>
+          <th>Show Marker</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container
+          *ngFor="let session of filteredData$ | async; let sessionIndex = index"
+        >
+          <tr
+            *ngFor="let track of session.tracks; let trackIndex = index"
+            [class.hl]="
+              (markerstatus | async)
+                ? (markerstatus | async)?.isShowing &&
+                  (markerstatus | async)?.sessionIndex === sessionIndex &&
+                  (markerstatus | async)?.sessionTrackIndex === trackIndex
+                : false
+            "
+          >
+            <td>{{ track.timestamp }}</td>
+            <td>{{ track.latitude }}</td>
+            <td>{{ track.longitude }}</td>
+            <td>{{ track.groundSpeed }}</td>
+            <td>{{ track.altitude }}</td>
+            <td>{{ track.onGround }}</td>
+            <td>{{ session.id }}</td>
+            <td>
+              <button (click)="setMarker(sessionIndex, trackIndex)">
+                Click
+              </button>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+  <div class="flightPlans">
+    <h1>Filed Flight Plans</h1>
+    <ol>
+      <ng-container *ngFor="let session of filteredData$ | async">
+        <li *ngFor="let flightPlan of session.flightPlans">
+          (FPL-{{ session.callsign }}-{{ flightPlan.flightRules
+          }}{{ flightPlan.flightType }}<br />
+          -{{ flightPlan.aircraftNumber }}{{ flightPlan.aircraft.icaoCode }}/{{
+            flightPlan.aircraft.wakeTurbulence
+          }}-{{ flightPlan.aircraftEquipments }}/{{
+            flightPlan.aircraftTransponderTypes
+          }}<br />
+          -{{ flightPlan.departureId }}{{ flightPlan.departureTime }}<br />
+          -{{ flightPlan.speed }}{{ flightPlan.level }} {{ flightPlan.route
+          }}<br />
+          -{{ flightPlan.arrivalId }}{{ flightPlan.eet }}
+          {{ flightPlan.alternativeId }} {{ flightPlan.alternative2Id }}<br />
+          -{{ flightPlan.remarks }})<br />
+
+          <pre>Filed at {{ flightPlan.createdAt }}</pre>
+          <pre>Client ID: {{ session.id }}</pre>
+        </li>
+      </ng-container>
+    </ol>
+  </div>
+</div>
