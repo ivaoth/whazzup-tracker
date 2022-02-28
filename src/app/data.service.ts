@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { first, shareReplay } from 'rxjs/operators';
 import { DownloadService } from './download.service';
 import { PilotSessionWithValidation } from './shared/types';
@@ -10,12 +10,12 @@ import * as idbKv from 'idb-keyval';
 })
 export class DataService {
   dataSubject: Observable<PilotSessionWithValidation[]>;
-  private dataSubjectInternal: Subject<PilotSessionWithValidation[]>;
+  private dataSubjectInternal: ReplaySubject<PilotSessionWithValidation[]>;
   dataSubjectInput: Subject<PilotSessionWithValidation[]>;
   resolved = false;
 
   constructor(private downloadService: DownloadService) {
-    this.dataSubjectInternal = new Subject();
+    this.dataSubjectInternal = new ReplaySubject(1);
     this.dataSubject = this.dataSubjectInternal.pipe(shareReplay(1));
     this.dataSubjectInput = new Subject();
     idbKv
