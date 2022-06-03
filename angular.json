@@ -113,7 +113,6 @@
       }
     }
   },
-  "defaultProject": "whazzup-tracker",
   "cli": {
     "analytics": false
   }
