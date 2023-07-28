@@ -36,7 +36,7 @@
     "@types/node": "18.17.1",
     "@types/ol": "7.0.0",
     "codelyzer": "6.0.2",
-    "jasmine-core": "5.1.0",
+    "jasmine-core": "4.6.0",
     "jasmine-spec-reporter": "7.0.0",
     "karma": "6.4.2",
     "karma-chrome-launcher": "3.2.0",
