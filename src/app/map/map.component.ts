@@ -33,9 +33,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   data: Observable<PilotSessionWithValidation[]>;
   filteredData$: Observable<PilotSessionWithValidation[]>;
   map!: Map;
-  markerLayer: VectorLayer;
-  smallMarkerLayer: VectorLayer;
-  lineLayer: VectorLayer;
+  markerLayer: VectorLayer<VectorSource>;
+  smallMarkerLayer: VectorLayer<VectorSource>;
+  lineLayer: VectorLayer<VectorSource>;
   markerstatus: Observable<{
     sessionIndex: number;
     sessionTrackIndex: number;
@@ -102,10 +102,10 @@ export class MapComponent implements OnInit, AfterViewInit {
           f.setStyle(iconStyle);
           return f;
         });
-        this.smallMarkerLayer.getSource().clear();
-        this.smallMarkerLayer.getSource().addFeatures(pointerFeatures);
-        this.lineLayer.getSource().clear();
-        this.lineLayer.getSource().addFeatures(lineFeatures);
+        this.smallMarkerLayer.getSource()!.clear();
+        this.smallMarkerLayer.getSource()!.addFeatures(pointerFeatures);
+        this.lineLayer.getSource()!.clear();
+        this.lineLayer.getSource()!.addFeatures(lineFeatures);
       })
     );
     const markerFeature = new Feature({
@@ -209,8 +209,8 @@ export class MapComponent implements OnInit, AfterViewInit {
             this.markerLayer.setVisible(true);
             const track = v.data[v.sessionIndex].tracks[v.sessionTrackIndex];
             this.markerLayer
-              .getSource()
-              .getFeatureById(1)
+              .getSource()!
+              .getFeatureById(1)!
               .setGeometry(
                 new Point(fromLonLat([track.longitude, track.latitude]))
               );
