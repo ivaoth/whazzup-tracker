@@ -1,5 +1,5 @@
 {
   "extends": [
-    "@sarunint:angular-v14"
+    "github>sarunint/renovate-config//angular/v16"
   ]
 }
