@@ -33,7 +33,7 @@
     "@angular/language-service": "16.2.12",
     "@types/jasmine": "4.3.6",
     "@types/jasminewd2": "2.0.12",
-    "@types/node": "18.18.0",
+    "@types/node": "18.18.8",
     "jasmine-core": "5.1.1",
     "jasmine-spec-reporter": "7.0.0",
     "karma": "6.4.2",
